@@ -17,5 +17,15 @@
   "dependencies": {
     "express": "^2.0.3",
     "pug": "^3.0.2"
-  }
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/normalstory/noom_rtc.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/normalstory/noom_rtc/issues"
+  },
+  "homepage": "https://github.com/normalstory/noom_rtc#readme"
 }
