@@ -1,7 +1,7 @@
 {
   "name": "noom_rtc",
   "version": "1.0.0",
-  "description": "zoom clone using node, RTC",
+  "description": "zoom clone using nodeJS, webRTC and Web sockets",
   "author": "",
   "license": "MIT",
   "scripts": {
