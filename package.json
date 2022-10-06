@@ -15,7 +15,7 @@
     "nodemon": "^2.0.20"
   },
   "dependencies": {
-    "expree": "^2.0.3",
+    "express": "^2.0.3",
     "pug": "^3.0.2"
   }
 }
