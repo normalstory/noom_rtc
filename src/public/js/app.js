@@ -1,19 +1,27 @@
-// alert("hello world");
+const msgForm = document.querySelector("form");
+const msgList = document.querySelector("ul");
 
-// ws에 연결을 요청하고, 받을 오브젝트 선언 
 const socket = new WebSocket(`ws://${window.location.host}`);
 
-socket.addEventListener("open", ()=>{            // 샘플1-2. 웹소캣 연결 대기& 확인 
+function handleOpen(){
     console.log("Connected to Server");
-})
-socket.addEventListener("message", (message)=>{  // 샘플2-2. 메시지 수신 대기& 확인 
+}
+function handleMsg(message){
     console.log("Just got this : ", message.data);
-    
-})
-socket.addEventListener("close", ()=>{
+}
+function handelClose(){
     console.log(" Disconnect from the Server ");
-})
+}
+socket.addEventListener("open", handleOpen);
+socket.addEventListener("message", handleMsg);
+socket.addEventListener("close", handelClose);
 
-setTimeout( () => {
-socket.send("HelLo Server? from the Browser!");  // 샘플 3-1 이번엔 브라우저에서 먼저 메시지를 보내는 경우 
-}, 10000);
+function handleMsgSubmit(event){
+    event.preventDefault();
+    // console.log(event);
+    const input = document.querySelector("input");
+    // console.log(input.value);
+    socket.send(input.value);
+    input.value="";
+}
+msgForm.addEventListener("submit", handleMsgSubmit);
