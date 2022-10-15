@@ -19,33 +19,22 @@ function handelClose(){
     console.log("Disconnected from the Browser")
 }
 
-//dummy db for divide for user
 const sockets = [];  
-
 wss.on("connection", (socket)=>{           
     console.log("Connected to Browser");
 
-    sockets.push(socket); //divide for user
-    socket["nickname"] = "익명"; // 초기값(익명, 닉네임을 입력하지 않은 경우)
-
-    //대기 중인 각각의 소캣 이벤트 항목 
+    sockets.push(socket); 
+    socket["nickname"] = "익명"; 
     socket.on("close", handelClose);
     socket.on("message", (message)=>{
-        const tossMsg = JSON.parse(message.toString('utf8')); //string to js object
+        const tossMsg = JSON.parse(message.toString('utf8'));
         
         switch(tossMsg.type){
             case "new-message" : 
-                // sockets.forEach( (eachSocket) => eachSocket.send(tossMsg.payload));
                 sockets.forEach( eachSocket => eachSocket.send( `${socket.nickname} : ${tossMsg.payload}`));
             case "nick-name" : 
-                // console.log(tossMsg.payload,"님이 입장하셨습니다.");
                 socket["nickname"] = tossMsg.payload;
         }
-        // if(tossMsg.type==="new-message"){
-        //     sockets.forEach( (eachSocket) => eachSocket.send(tossMsg.payload));
-        // }else if(tossMsg.type==="nick-name"){
-        //     console.log(tossMsg.payload,"님이 입장하셨습니다.")
-        // }
     });       
 })
    
