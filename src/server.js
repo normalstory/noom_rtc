@@ -14,11 +14,19 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-    socket.on("enter_room", (msg, param3th) => {
-        console.log(msg);
+    socket.onAny((event)=>{
+        console.log(`socket event : ${event}`);
+    });
+
+    socket.on("enter_room", (roomName, lastParam) => {
+        console.log(socket.id);
+        console.log(socket.rooms);
+        socket.join(roomName);
+        console.log(socket.rooms);
+
         setTimeout(()=>{
             //app.js에 있는 socket.emit(”event”, {object}, ()⇒{…})에 담았던 세번째 argument
-            param3th(); 
+            lastParam(); 
         },10000);
     });
 })
