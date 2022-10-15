@@ -18,18 +18,15 @@ wsServer.on("connection", (socket) => {
         console.log(`socket event : ${event}`);
     });
 
-    socket.on("enter_room", (roomName, lastParam) => {
-        console.log(socket.id);
-        console.log(socket.rooms);
+    //client에서 던진 이벤트 이름
+    socket.on("enter_room", (roomName, lastParam) => { 
         socket.join(roomName);
-        console.log(socket.rooms);
-
-        setTimeout(()=>{
-            //app.js에 있는 socket.emit(”event”, {object}, ()⇒{…})에 담았던 세번째 argument
-            lastParam(); 
-        },10000);
+        lastParam(); // run showRoom() on Client( app.js)
+        console.log(socket.id);
+        socket.to(roomName).emit("welcomeMsg");
+        console.log(socket.id);
     });
 })
 
 const handleListen = () => console.log('listening on http://localhost:3000'); 
-httpServer.listen(3000,handleListen);  
+httpServer.listen(3000, handleListen);  
