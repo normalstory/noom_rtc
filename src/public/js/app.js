@@ -32,7 +32,9 @@ function handleRoomSubmit(event){
 
 form.addEventListener("submit", handleRoomSubmit);
 
-socket.on("welcomeMsg", ()=>{
-    console.log("someone");
+socket.on("welcomeMsg", () => {
     addMsg("someone joined!");
+});
+socket.on("bye", () => {
+    addMsg("someone left! TT");
 });
