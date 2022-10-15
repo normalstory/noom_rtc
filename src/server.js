@@ -14,7 +14,13 @@ const httpServer = http.createServer(app);
 const wsServer = SocketIO(httpServer);
 
 wsServer.on("connection", (socket) => {
-    console.log(socket);
+    socket.on("enter_room", (msg, param3th) => {
+        console.log(msg);
+        setTimeout(()=>{
+            //app.js에 있는 socket.emit(”event”, {object}, ()⇒{…})에 담았던 세번째 argument
+            param3th(); 
+        },10000);
+    });
 })
 
 const handleListen = () => console.log('listening on http://localhost:3000'); 
