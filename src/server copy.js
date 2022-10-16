@@ -15,7 +15,7 @@ const wsServer = SocketIO(httpServer);
 
 //예약어 connection
 wsServer.on("connection", (socket) => {
-    socket["nickname"] = "Anon";
+    socket["nickname"] = "익명";
 
     socket.onAny((event)=>{
         console.log(`socket event : ${event}`);
@@ -23,7 +23,7 @@ wsServer.on("connection", (socket) => {
 
     //client에서 던진 이벤트 이름 enter_room
     socket.on("enter_room", (roomName, lastParam) => { 
-        socket.join(roomName); //#삽질
+        socket.join(roomName);
         lastParam(); // run showRoom() on Client( app.js)
         // console.log(socket.id);
         socket.to(roomName).emit("welcomeMsg", socket.nickname);
@@ -33,7 +33,7 @@ wsServer.on("connection", (socket) => {
     //예약어 disconnecting
     socket.on("disconnecting",()=>{
         // console.log(socket.rooms);
-        socket.rooms.forEach( (room) => socket.to(room).emit("bye", socket.nickname));
+        socket.rooms.forEach( (room) => socket.to(room).emit("bye"));
     })
 
     //*** 예약어 sendMsg */ 
@@ -45,7 +45,7 @@ wsServer.on("connection", (socket) => {
     })
 
     //nickname
-    socket.on("nickname", nickname => socket["nickname"] = nickname);
+    socket.on("nickname", (nickname) => socket["nickname"] = nickname);
 })
 
 const handleListen = () => console.log('listening on http://localhost:3000'); 
