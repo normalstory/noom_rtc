@@ -13,7 +13,7 @@ app.get("/*",(req,res) => res.redirect("/"));
 const httpServer = http.createServer(app); 
 const wsServer = SocketIO(httpServer);
 
-function getPublcRooms(){
+function getPublicRooms(){
     const {
         sockets:
             {adapter:{
@@ -44,17 +44,23 @@ wsServer.on("connection", (socket) => {
     //client에서 던진 이벤트 이름 enter_room
     socket.on("enter_room", (roomName, lastParam) => { 
         socket.join(roomName); //#삽질
-        lastParam(); // run showRoom() on Client( app.js)
-        // console.log(socket.id);
+        lastParam(); 
+        //하나의 socket에 메시지 전달
         socket.to(roomName).emit("welcomeMsg", socket.nickname);
-        // console.log(socket.id);
+        //서버에 접속한 모든 socket에 메시지 전달 by wsServer
+        wsServer.sockets.emit("publicRoomListMsg", getPublicRooms());
     });
 
-    //예약어 disconnecting
+    //방을 나간 사용자가 있을때 - 예약어 disconnecting
     socket.on("disconnecting",()=>{
-        // console.log(socket.rooms);
         socket.rooms.forEach( (room) => socket.to(room).emit("bye", socket.nickname));
     })
+    //방을 나간 사용자가 있을때 by wsServer - 예약어 disconnect
+    socket.on("disconnect",()=>{
+        //서버에 접속한 모든 socket에 메시지 전달
+        wsServer.sockets.emit("publicRoomListMsg", getPublicRooms());
+    })
+
 
     //*** 예약어 sendMsg */ 
     socket.on("sendMsg", (msg, roomName, lastArg)=>{

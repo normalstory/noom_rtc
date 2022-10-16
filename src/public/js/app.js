@@ -69,3 +69,18 @@ socket.on("bye", (userLeft) => {
     addMsg(`${userLeft} left ㅜㅜ`);
 });
 socket.on("tossMsg", addMsg);
+socket.on("publicRoomListMsg", (rooms)=>{    
+    const roomList = welcome.querySelector("ul");
+
+    //개별 클라이언트의 상태가 변경(새로고침) 할 때마다 룸 목록 초기화 
+    roomList.innerHTML="";
+    if(rooms.length === 0){
+        return;
+    }
+    //방 목록 
+    rooms.forEach(room =>{
+        const li = document.createElement("li");
+        li.innerText=room;
+        roomList.appendChild(li);
+    });
+});
