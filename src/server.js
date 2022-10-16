@@ -13,11 +13,31 @@ app.get("/*",(req,res) => res.redirect("/"));
 const httpServer = http.createServer(app); 
 const wsServer = SocketIO(httpServer);
 
+function getPublcRooms(){
+    const {
+        sockets:
+            {adapter:{
+                sids, rooms
+            },
+        },
+    } = wsServer;
+
+    const publicRooms =[];
+    rooms.forEach((_, keys) => {
+        if(sids.get(keys)===undefined){
+            publicRooms.push(keys);
+        }
+    });
+    return publicRooms;
+}
+
 //예약어 connection
 wsServer.on("connection", (socket) => {
     socket["nickname"] = "Anon";
 
     socket.onAny((event)=>{
+        //adapter check
+        console.log(wsServer.sockets.adapter);
         console.log(`socket event : ${event}`);
     });
 
