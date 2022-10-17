@@ -30,6 +30,11 @@ function getPublicRooms(){
     });
     return publicRooms;
 }
+//set형태로 저장된 room에 사이즈를 통해 참석자 수를 파악하는 함수 생성 : 들어왔을때, 나가기 직전(dis-ing)에.
+function countRoom(roomName){
+    return wsServer.sockets.adapter.rooms.get(roomName)?.size;
+}
+
 
 //예약어 connection
 wsServer.on("connection", (socket) => {
@@ -45,17 +50,17 @@ wsServer.on("connection", (socket) => {
     socket.on("enter_room", (roomName, lastParam) => { 
         socket.join(roomName); //#삽질
         lastParam(); 
-        //하나의 socket에 메시지 전달
-        socket.to(roomName).emit("welcomeMsg", socket.nickname);
+        //하나의 socket에 메시지 전달 :메시지, 닉네임, 참가자 수 
+        socket.to(roomName).emit("welcomeMsg", socket.nickname, countRoom(roomName));
         //서버에 접속한 모든 socket에 메시지 전달 by wsServer
         wsServer.sockets.emit("publicRoomListMsg", getPublicRooms());
     });
 
-    //방을 나간 사용자가 있을때 - 예약어 disconnecting
+    //방을 나간 사용자가 있을때 - 예약어 disconnecting(나가지 직전) :메시지, 닉네임, 참가자 수 
     socket.on("disconnecting",()=>{
-        socket.rooms.forEach( (room) => socket.to(room).emit("bye", socket.nickname));
+        socket.rooms.forEach( (room) => socket.to(room).emit("bye", socket.nickname, countRoom(room)-1));
     })
-    //방을 나간 사용자가 있을때 by wsServer - 예약어 disconnect
+    //방을 나간 사용자가 있을때 by wsServer - 예약어 disconnect(나간 후)  
     socket.on("disconnect",()=>{
         //서버에 접속한 모든 socket에 메시지 전달
         wsServer.sockets.emit("publicRoomListMsg", getPublicRooms());

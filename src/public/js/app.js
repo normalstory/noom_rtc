@@ -36,6 +36,7 @@ function addMsg(msg){
 function showRoom(){
     welcome.hidden=true;
     room.hidden=false;
+    //방이름 
     const h3 = room.querySelector("h3");
     h3.innerText=`Room : ${roomName}`;
     
@@ -56,16 +57,16 @@ function handleRoomSubmit(event){
 }
 
 welcome.addEventListener("submit", handleRoomSubmit);
-// room.addEventListener("submit", handleMsgSend);  //#삽질 -> showRoom안으로
 
 
-//receive socket msg 
-// socket.on("welcomeMsg", userCome, () => {   //#삽질
-socket.on("welcomeMsg", (userCome) => {
+socket.on("welcomeMsg", (userCome, newCount) => {
+    const h3 = room.querySelector("h3");
+    h3.innerText=`Room : ${roomName} (${newCount} 명 - 참여 중)`;
     addMsg(`${userCome} arrived!`);
 });
-// socket.on("bye", userLeft, () => {    //#삽질
-socket.on("bye", (userLeft) => {
+socket.on("bye", (userLeft, newCount) => {
+    const h3 = room.querySelector("h3");
+    h3.innerText=`Room : ${roomName} (${newCount} 명 - 참여 중)`;
     addMsg(`${userLeft} left ㅜㅜ`);
 });
 socket.on("tossMsg", addMsg);
