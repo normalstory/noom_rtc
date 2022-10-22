@@ -1,5 +1,7 @@
 # Noom
 
+줌 클론한 놈 ;D 
+
 "zoom clone using nodeJS, webRTC and Web sockets"
 
 ## Server Setup
