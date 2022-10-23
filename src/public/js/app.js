@@ -11,7 +11,7 @@ const call = document.getElementById("call");
 let myStream; // 오디오 + 비디오
 let muted = false;
 let cameraOff = false;
-let roomName; //handelWelcomeForm()안에 있는 input.value를 나중에도 사용하기 위해 
+let roomName; //handleWelcomeForm()안에 있는 input.value를 나중에도 사용하기 위해 
 let myPeerConnection; // peerConnection에 누구나 접속할 수 있도록 
 
 call.hidden=true;
@@ -20,8 +20,6 @@ async function getCameras() {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const cameras = devices.filter((device) => device.kind === "videoinput");
-    // console.log(cameras);
-    // console.log(myStream.getVideoTracks());
     const currentCamera = myStream.getVideoTracks()[0];
     cameras.forEach((camera) => {
       const option = document.createElement("option");
@@ -51,13 +49,8 @@ async function getMedia(devideId) {
   };
   try {
     myStream = await navigator.mediaDevices.getUserMedia(
-      //   {
-      //   audio: true, // = constraints
-      //   video: true,
-      // } 위에서 devideId 유무에 대한 처리 진행
       devideId ? cameraConstraints : initalConstraints
     );
-    // console.log(myStream);
     myFace.srcObject = myStream;
 
     if (!devideId) {
@@ -67,10 +60,8 @@ async function getMedia(devideId) {
     console.log(e);
   }
 }
-// getMedia();
 
 function handleMuteClick() {
-  // console.log(myStream.getAudioTracks());
   myStream
     .getAudioTracks()
     .forEach((track) => (track.enabled = !track.enabled));
@@ -109,38 +100,43 @@ const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
 //양쪽 브라우저에서 사용되는 코드 *
-async function startMedia(){
+async function initCall(){
   welcome.hidden=true
   call.hidden=false;
   await getMedia(); //방 진입시,welcome을 숨기소 call ui제공 함수  
   makeConnection(); // 실제로 rtc 연결을 하는 함수
 }
 
-function handelWelcomeForm(event){
+async function handleWelcomeForm(event){
   event.preventDefault();
   const input = welcomeForm.querySelector("input");
-  // console.log(input.value);
-  socket.emit("join_room",input.value, startMedia); //#pair_a2
-  roomName=input.value; //나중에 현재 방이름을 다시 알(쓸) 수 있도록 전역변수를 선언해서 담는다 
+  // socket.emit("join_room",input.value, startMedia); //#pair_a2
+  await initCall(); //  *err-2*, 명칭수정  
+  socket.emit("join_room",input.value); //#pair_a2
+  roomName=input.value; 
   input.value="";
 }
 //신규 방생성
-welcomeForm.addEventListener("submit",handelWelcomeForm);
+welcomeForm.addEventListener("submit",handleWelcomeForm);
 
 //Socket code : 다른사람이 내 방에 방문하는 경우 
 //#peer A  - offer를 만드는 주체 
 socket.on("welcome",async()=>{
-  // console.log("someone joined");
-  const offer = await myPeerConnection.createOffer();
-  // console.log(offer) //RTCSessionDescription에 내가 누구고, 어디에 있고 등을 적은 초대장 생성 
+  const offer = await myPeerConnection.createOffer(); 
   myPeerConnection.setLocalDescription(offer);
   console.log("sent the offer");
   socket.emit("offer", offer, roomName); //#pair_c1
 }) //#pair_b2
 
 //#peer B - 방문자 
-socket.on("offer", (offer)=>{
-  console.log(offer);
+socket.on("offer", async(offer)=>{
+  myPeerConnection.setRemoteDescription(offer);
+  // *err-1* 에러 : webSocket이 너무 빨라 peer A의 offer가 도착한 순간에
+  // peer B에는 아직 myPeerConnection가 존재않지 못함 
+  // webSocket이 media를 가져오는 속도, 연결을 만드는 속도보다 빠름 
+  // -> getMedia() -> makeConnection() -> 이벤트.emit -> peer A에 B 도착 -> A의 offer ->B에서 setRemoteDescription를 통해 answer 생성    
+  const answer= await myPeerConnection.createAnswer();
+  console.log(answer);
 });  //#pair_c3
 
 
@@ -148,7 +144,6 @@ socket.on("offer", (offer)=>{
 function makeConnection(){
   // 각각의 브라우저에 peer to peer연결을 '구성(아직, 연결 x)' 
   myPeerConnection = new RTCPeerConnection(); 
-  // console.log(myStream.getTracks());
   myStream 
     .getTracks()
     .forEach((track)=>myPeerConnection.addTrack(track, myStream)); 
