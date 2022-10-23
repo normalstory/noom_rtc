@@ -1,6 +1,6 @@
 import http from "http";
+import SocketIO from "socket.io"; // Signaling Server 역할å
 import express from "express";
-import SocketIO from "socket.io"; // Signaling Server 역할
 
 const app = express();
 
