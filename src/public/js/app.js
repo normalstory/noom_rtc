@@ -34,7 +34,7 @@ async function getCameras() {
   } catch (e) {
     console.log(e);
   }
-}
+};
 
 async function getMedia(devideId) {
   //divideId 없을때
@@ -59,7 +59,7 @@ async function getMedia(devideId) {
   } catch (e) {
     console.log(e);
   }
-}
+};
 
 function handleMuteClick() {
   myStream
@@ -72,7 +72,7 @@ function handleMuteClick() {
     muteBtn.innerText = "Mute";
     muted = false;
   }
-}
+};
 function handleCameraClick() {
   myStream
     .getVideoTracks()
@@ -84,10 +84,10 @@ function handleCameraClick() {
     camera.innerText = "Camera On";
     cameraOff = true;
   }
-}
+};
 async function handelCameraChange() {
   await getMedia(camerasSelect.value);
-}
+};
 
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
@@ -105,7 +105,7 @@ async function initCall(){
   call.hidden=false;
   await getMedia(); //방 진입시,welcome을 숨기소 call ui제공 함수  
   makeConnection(); // 실제로 rtc 연결을 하는 함수
-}
+};
 
 async function handleWelcomeForm(event){
   event.preventDefault();
@@ -119,14 +119,14 @@ async function handleWelcomeForm(event){
 //신규 방생성
 welcomeForm.addEventListener("submit",handleWelcomeForm);
 
-//Socket code : 다른사람이 내 방에 방문하는 경우 
+//*** Socket code : 다른사람이 내 방에 방문하는 경우 
 //#peer A  - offer를 만드는 주체 
 socket.on("welcome",async()=>{
   const offer = await myPeerConnection.createOffer(); 
   myPeerConnection.setLocalDescription(offer);
   console.log("sent the offer");
   socket.emit("offer", offer, roomName); //#pair_c1
-}) //#pair_b2
+}); //#pair_b2
 
 //#peer B - 방문자 
 socket.on("offer", async(offer)=>{
@@ -135,27 +135,37 @@ socket.on("offer", async(offer)=>{
   const answer= await myPeerConnection.createAnswer(); //
   // answer를 peer B로 전달 
   myPeerConnection.setLocalDescription(answer);
-  socket.emit("answer",answer);  //#pair_d1
+  socket.emit("answer", answer, roomName);  //#pair_d1
   console.log("sent the answer");
-});  //#pair_c3
+}); //#pair_c3
 
 //#peer A  
-socket.on("answer", (answer)=>{
+socket.on("answer", (answer) => {
   console.log("received the answer");
-  myPeerConnection.setRemoteDescription(answer); // answer를 받은 peer A 도 이제, LocalDescription와 RemoteDescription 모두를 갖게됨 
-})  //#pair_d3
+  myPeerConnection.setRemoteDescription(answer);  // answer를 받은 peer A 도 이제, LocalDescription와 RemoteDescription 모두를 갖게됨 
+});  //#pair_d3
+
+// ice event
+socket.on("ice", (ice) => {
+  console.log("received candidate");
+  myPeerConnection.addIceCandidate(ice);
+}); //#pair_e3
 
 
-//RTC code - addStream 대신 사용할 함수 세팅 : track들을 개별적으로 추가 
+//*** RTC code - addStream 대신 사용할 함수 세팅 : track들을 개별적으로 추가 
 function makeConnection(){
   myPeerConnection = new RTCPeerConnection(); 
   myPeerConnection.addEventListener("icecandidate", handleIce);
   myStream 
     .getTracks()
     .forEach((track)=>myPeerConnection.addTrack(track, myStream)); 
-}
+};
+
 // icecandidate 연결(offer와 answer를 통해 상호합의)된 peer끼리만 공유하는- 소통방식을 담은 데이터이다. 
 function handleIce(data){
-  console.log("- got ice-candidate -");
-  console.log(data);
-}
+  // console.log("- got ice-candidate -");
+  // console.log(data);
+  //#pair_e1 합의된 peer들이 Signaling 서버를 통해 candidate를 주고받을 수 있도록 세팅 => ice event를 emit하도록 한다 
+  socket.emit("ice", data.candidate, roomName); 
+  console.log("sent the Candidate");
+};

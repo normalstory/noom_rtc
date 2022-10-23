@@ -26,7 +26,11 @@ wsServer.on("connection",(socket)=>{
     socket.on("answer", (answer, roomName)=>{
         socket.to(roomName).emit("answer", answer);
     }); // #pair_d2
-})
+    
+    socket.on("ice", (ice, roomName)=>{
+        socket.to(roomName).emit("ice",ice);
+    }); //#pair_e1 합의된 peer들이 Signaling 서버를 통해 candidate를 주고받을 수 있도록 세팅 => ice event를 emit하도록 한다 
+});
 
 const handleListen = () => console.log("listening on http://localhost:3000");
 httpServer.listen(3000, handleListen);
