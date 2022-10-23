@@ -5,9 +5,15 @@ const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 
+
+const call = document.getElementById("call");
+
 let myStream; // 오디오 + 비디오
 let muted = false;
 let cameraOff = false;
+let roomName;
+
+call.hidden=true;
 
 async function getCameras() {
   try {
@@ -60,7 +66,7 @@ async function getMedia(devideId) {
     console.log(e);
   }
 }
-getMedia();
+// getMedia();
 
 function handleMuteClick() {
   // console.log(myStream.getAudioTracks());
@@ -94,3 +100,32 @@ async function handelCameraChange() {
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
 camerasSelect.addEventListener("input", handelCameraChange);
+
+
+
+//** welcome form : join a room */
+const welcome = document.getElementById("welcome");
+const welcomeForm = welcome.querySelector("form");
+
+//양쪽 브라우저에서 사용되는 코드 *
+function startMedia(){
+  welcome.hidden=true
+  call.hidden=false;
+  getMedia();
+}
+
+function handelWelcomeForm(event){
+  event.preventDefault();
+  const input = welcomeForm.querySelector("input");
+  // console.log(input.value);
+  socket.emit("join_room",input.value, startMedia); //#pair_a2
+  roomName=input.value; //나중에 현재 방이름을 다시 알(쓸) 수 있도록 전역변수를 선언해서 담는다 
+  input.value="";
+}
+//신규 방생성
+welcomeForm.addEventListener("submit",handelWelcomeForm);
+
+//socket code : 다른사람이 내 방에 방문하는 경우 
+socket.on("welcome",()=>{ //#pair_b2
+  console.log("someone joined");
+})
