@@ -130,15 +130,18 @@ socket.on("welcome",async()=>{
 
 //#peer B - 방문자 
 socket.on("offer", async(offer)=>{
+  console.log("received the offer");
   myPeerConnection.setRemoteDescription(offer);
   const answer= await myPeerConnection.createAnswer(); //
   // answer를 peer B로 전달 
   myPeerConnection.setLocalDescription(answer);
   socket.emit("answer",answer);  //#pair_d1
+  console.log("sent the answer");
 });  //#pair_c3
 
 //#peer A  
 socket.on("answer", (answer)=>{
+  console.log("received the answer");
   myPeerConnection.setRemoteDescription(answer); // answer를 받은 peer A 도 이제, LocalDescription와 RemoteDescription 모두를 갖게됨 
 })  //#pair_d3
 
@@ -146,7 +149,13 @@ socket.on("answer", (answer)=>{
 //RTC code - addStream 대신 사용할 함수 세팅 : track들을 개별적으로 추가 
 function makeConnection(){
   myPeerConnection = new RTCPeerConnection(); 
+  myPeerConnection.addEventListener("icecandidate", handleIce);
   myStream 
     .getTracks()
     .forEach((track)=>myPeerConnection.addTrack(track, myStream)); 
+}
+// icecandidate 연결(offer와 answer를 통해 상호합의)된 peer끼리만 공유하는- 소통방식을 담은 데이터이다. 
+function handleIce(data){
+  console.log("- got ice-candidate -");
+  console.log(data);
 }
