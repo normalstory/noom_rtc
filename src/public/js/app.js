@@ -131,21 +131,22 @@ socket.on("welcome",async()=>{
 //#peer B - 방문자 
 socket.on("offer", async(offer)=>{
   myPeerConnection.setRemoteDescription(offer);
-  // *err-1* 에러 : webSocket이 너무 빨라 peer A의 offer가 도착한 순간에
-  // peer B에는 아직 myPeerConnection가 존재않지 못함 
-  // webSocket이 media를 가져오는 속도, 연결을 만드는 속도보다 빠름 
-  // -> getMedia() -> makeConnection() -> 이벤트.emit -> peer A에 B 도착 -> A의 offer ->B에서 setRemoteDescription를 통해 answer 생성    
-  const answer= await myPeerConnection.createAnswer();
-  console.log(answer);
+  const answer= await myPeerConnection.createAnswer(); //
+  // answer를 peer B로 전달 
+  myPeerConnection.setLocalDescription(answer);
+  socket.emit("answer",answer);  //#pair_d1
 });  //#pair_c3
 
+//#peer A  
+socket.on("answer", (answer)=>{
+  myPeerConnection.setRemoteDescription(answer); // answer를 받은 peer A 도 이제, LocalDescription와 RemoteDescription 모두를 갖게됨 
+})  //#pair_d3
 
-//RTC code
+
+//RTC code - addStream 대신 사용할 함수 세팅 : track들을 개별적으로 추가 
 function makeConnection(){
-  // 각각의 브라우저에 peer to peer연결을 '구성(아직, 연결 x)' 
   myPeerConnection = new RTCPeerConnection(); 
   myStream 
     .getTracks()
     .forEach((track)=>myPeerConnection.addTrack(track, myStream)); 
-    // 브라우저로부터 stream(카메라와 마이크)을 받아서 데이터를 P2P연결 안에 넣기 
 }

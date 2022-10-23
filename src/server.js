@@ -1,6 +1,6 @@
 import http from "http";
 import express from "express";
-import SocketIO from "socket.io";
+import SocketIO from "socket.io"; // Signaling Server 역할
 
 const app = express();
 
@@ -23,6 +23,9 @@ wsServer.on("connection",(socket)=>{
     socket.on("offer", (offer,roomName)=>{
         socket.to(roomName).emit("offer", offer);
     });   //#pair_c2
+    socket.on("answer", (answer, roomName)=>{
+        socket.to(roomName).emit("answer", answer);
+    }); // #pair_d2
 })
 
 const handleListen = () => console.log("listening on http://localhost:3000");
