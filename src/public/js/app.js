@@ -11,7 +11,8 @@ const call = document.getElementById("call");
 let myStream; // 오디오 + 비디오
 let muted = false;
 let cameraOff = false;
-let roomName;
+let roomName; //handelWelcomeForm()안에 있는 input.value를 나중에도 사용하기 위해 
+let myPeerConnection; // peerConnection에 누구나 접속할 수 있도록 
 
 call.hidden=true;
 
@@ -38,13 +39,13 @@ async function getCameras() {
 }
 
 async function getMedia(devideId) {
-  //devideId 없을때
+  //divideId 없을때
   const initalConstraints = {
     audio: true,
     video: { facingMode: "user" },
   };
   //devideId 있을때
-  const cemeraConstraints = {
+  const cameraConstraints = {
     audio: true,
     video: { devideId: { exact: devideId } },
   };
@@ -54,7 +55,7 @@ async function getMedia(devideId) {
       //   audio: true, // = constraints
       //   video: true,
       // } 위에서 devideId 유무에 대한 처리 진행
-      devideId ? cemeraConstraints : initalConstraints
+      devideId ? cameraConstraints : initalConstraints
     );
     // console.log(myStream);
     myFace.srcObject = myStream;
@@ -74,10 +75,10 @@ function handleMuteClick() {
     .getAudioTracks()
     .forEach((track) => (track.enabled = !track.enabled));
   if (!muted) {
-    mute.innerText = "UnMute";
+    muteBtn.innerText = "UnMute";
     muted = true;
   } else {
-    mute.innerText = "Mute";
+    muteBtn.innerText = "Mute";
     muted = false;
   }
 }
@@ -108,10 +109,11 @@ const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
 //양쪽 브라우저에서 사용되는 코드 *
-function startMedia(){
+async function startMedia(){
   welcome.hidden=true
   call.hidden=false;
-  getMedia();
+  await getMedia(); //방 진입시,welcome을 숨기소 call ui제공 함수  
+  makeConnection(); // 실제로 rtc 연결을 하는 함수
 }
 
 function handelWelcomeForm(event){
@@ -125,7 +127,30 @@ function handelWelcomeForm(event){
 //신규 방생성
 welcomeForm.addEventListener("submit",handelWelcomeForm);
 
-//socket code : 다른사람이 내 방에 방문하는 경우 
-socket.on("welcome",()=>{ //#pair_b2
-  console.log("someone joined");
-})
+//Socket code : 다른사람이 내 방에 방문하는 경우 
+//#peer A  - offer를 만드는 주체 
+socket.on("welcome",async()=>{
+  // console.log("someone joined");
+  const offer = await myPeerConnection.createOffer();
+  // console.log(offer) //RTCSessionDescription에 내가 누구고, 어디에 있고 등을 적은 초대장 생성 
+  myPeerConnection.setLocalDescription(offer);
+  console.log("sent the offer");
+  socket.emit("offer", offer, roomName); //#pair_c1
+}) //#pair_b2
+
+//#peer B - 방문자 
+socket.on("offer", (offer)=>{
+  console.log(offer);
+});  //#pair_c3
+
+
+//RTC code
+function makeConnection(){
+  // 각각의 브라우저에 peer to peer연결을 '구성(아직, 연결 x)' 
+  myPeerConnection = new RTCPeerConnection(); 
+  // console.log(myStream.getTracks());
+  myStream 
+    .getTracks()
+    .forEach((track)=>myPeerConnection.addTrack(track, myStream)); 
+    // 브라우저로부터 stream(카메라와 마이크)을 받아서 데이터를 P2P연결 안에 넣기 
+}
