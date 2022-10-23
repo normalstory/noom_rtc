@@ -31,7 +31,7 @@ async function getCameras() {
   } catch (e) {
     console.log(e);
   }
-};
+}
 
 async function getMedia(deviceId) {
   //deviceId 없을때
@@ -49,19 +49,15 @@ async function getMedia(deviceId) {
       deviceId ? cameraConstraints : initialConstrains
     );
     myFace.srcObject = myStream;
-
     if (!deviceId) {
       await getCameras();
     }
   } catch (e) {
     console.log(e);
   }
-};
+}
 
-function handleMuteClick() {
-  myStream
-    .getAudioTracks()
-    .forEach((track) => (track.enabled = !track.enabled));
+function toggleMute(){
   if (!muted) {
     muteBtn.innerText = "Unmute";
     muted = true;
@@ -69,7 +65,13 @@ function handleMuteClick() {
     muteBtn.innerText = "Mute";
     muted = false;
   }
-};
+}
+function handleMuteClick() {
+  myStream
+    .getAudioTracks()
+    .forEach((track) => (track.enabled = !track.enabled));
+  toggleMute();
+}
 function handleCameraClick() {
   myStream
     .getVideoTracks()
@@ -81,14 +83,26 @@ function handleCameraClick() {
     cameraBtn.innerText = "Turn Camera On";
     cameraOff = true;
   }
-};
-async function handelCameraChange() {
+}
+
+async function handleCameraChange() {
   await getMedia(camerasSelect.value);
-};
+  if (myPeerConnection) {
+    // console.log(myPeerConnection.getSenders());
+    // Sender - peer로 보내진 media stream track을 컨트롤
+
+    const videoTrack = myStream.getVideoTracks()[0];
+    const videoSender = myPeerConnection
+      .getSenders()
+      .find((sender) => sender.track.kind === "video");
+    videoSender.replaceTrack(videoTrack);
+    toggleMute();
+  }
+}
 
 muteBtn.addEventListener("click", handleMuteClick);
 cameraBtn.addEventListener("click", handleCameraClick);
-camerasSelect.addEventListener("input", handelCameraChange);
+camerasSelect.addEventListener("input", handleCameraChange);
 
 
 
@@ -104,17 +118,17 @@ async function initCall() {
   makeConnection(); // 실제로 rtc 연결을 하는 함수
 };
 
-async function handleWelcomeForm(event){
+async function handleWelcomeSubmit(event) {
   event.preventDefault();
   const input = welcomeForm.querySelector("input");
   // socket.emit("join_room",input.value, startMedia); //#pair_a2
   await initCall(); //  *err-2*, 명칭수정  
-  socket.emit("join_room",input.value); //#pair_a2
-  roomName=input.value; 
-  input.value="";
+  socket.emit("join_room", input.value); //#pair_a2
+  roomName = input.value;
+  input.value = "";
 }
 //신규 방생성
-welcomeForm.addEventListener("submit",handleWelcomeForm);
+welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 //*** Socket code : 다른사람이 내 방에 방문하는 경우 
 //#peer A  - offer를 만드는 주체 
@@ -126,13 +140,13 @@ socket.on("welcome", async ()=>{
 }); //#pair_b2
 
 //#peer B - 방문자 
-socket.on("offer", async (offer)=>{
+socket.on("offer", async (offer) => {
   console.log("received the offer");
   myPeerConnection.setRemoteDescription(offer);
   const answer = await myPeerConnection.createAnswer();
   // answer를 peer B로 전달 
   myPeerConnection.setLocalDescription(answer);
-  socket.emit("answer", answer, roomName);  //#pair_d1
+  socket.emit("answer", answer, roomName); //#pair_d1
   console.log("sent the answer");
 }); //#pair_c3
 
@@ -151,28 +165,22 @@ socket.on("ice", (ice) => {
 
 
 //*** RTC code - addStream 대신 사용할 함수 세팅 : track들을 개별적으로 추가 
-function makeConnection(){
+function makeConnection() {
   myPeerConnection = new RTCPeerConnection(); 
   myPeerConnection.addEventListener("icecandidate", handleIce);
   myPeerConnection.addEventListener("addstream", handleAddStream);
-  myStream 
+  myStream
     .getTracks()
-    .forEach((track) => myPeerConnection.addTrack(track, myStream)); 
-};
+    .forEach((track) => myPeerConnection.addTrack(track, myStream));
+}
 
 // icecandidate 연결(offer와 answer를 통해 상호합의)된 peer끼리만 공유하는- 소통방식을 담은 데이터이다. 
-function handleIce(data){
-  // console.log("- got ice-candidate -");
-  // console.log(data);
-  //#pair_e1 합의된 peer들이 Signaling 서버를 통해 candidate를 주고받을 수 있도록 세팅 => ice event를 emit하도록 한다 
-  socket.emit("ice", data.candidate, roomName); 
-  console.log("sent the Candidate");
-};
+function handleIce(data) {
+  console.log("sent candidate");
+  socket.emit("ice", data.candidate, roomName);
+}
 
-function handleAddStream(data){
-  // console.log("got an stream from my peer");
-  // console.log("peer's stream :", data.stream);
-  // console.log("my stream :", myStream);
-  const peersFace = document.getElementById("peersFace");
-  peersFace.srcObject = data.stream;
-};
+function handleAddStream(data) {
+  const peerFace = document.getElementById("peerFace");
+  peerFace.srcObject = data.stream;
+}
